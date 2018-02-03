@@ -186,18 +186,19 @@ for name in planning_group_list:
         
         grouped_data[df_name] = grouped_data[df_name].drop(grouped_data[df_name].index[0:counter])
    
-    # enforce high volume size grid count constraint
+    # enforce higher volume size grid count constraint 
     
 #    silly_business_constraint_clusters = []
 #    max_cluster = max(cluster_categories)
-    
-#    for i in range(len(cluster_categories) - 1):
-#        df_name = 'PC9_volume_cluster_' + str(i)
-#        size_count_diff = len(grouped_data[df_name]) - len(grouped_data['PC9_volume_cluster_' + str(max_cluster)])
-#        if size_count_diff <= 0:
-#            silly_business_constraint_clusters.append(i)
-    
 #    silly_business_constraint_clusters.append(max_cluster)
+    
+#    for i in reversed(range(len(cluster_categories))):
+#        if i >= 1:
+    #        df_name_1 = 'PC9_volume_cluster_' + str(i)
+    #        df_name_2 = 'PC9_volume_cluster_' + str(i - 1)
+    #        size_count_diff = len(grouped_data[df_name_1]) - len(grouped_data[df_name_2])
+    #        if size_count_diff >= 0:
+    #            silly_business_constraint_clusters.append(i - 1)
     
     # join size volume cluster to joined_data df
 
