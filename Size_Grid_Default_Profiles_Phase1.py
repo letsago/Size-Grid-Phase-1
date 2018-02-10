@@ -207,11 +207,10 @@ for name in planning_group_list:
     
     # join size volume cluster to joined_data df
 
-    final_data = {}
+    final_data = pd.DataFrame()
 
     for cluster in cluster_categories:
         df_name = 'PC9_volume_cluster_' + str(cluster)
         grouped_data[df_name] = grouped_data[df_name].drop('PC9_Shipped_QTY', axis = 1)
-        final_data[df_name] = pd.merge(joined_data[df_name], grouped_data[df_name], on = ['Size_1', 'Size_2'])
-        final_data[df_name] = final_data[df_name].drop('PC9_Shipped_QTY', axis = 1)
-        final_data[df_name].to_csv('//sfonetapp3220a/Global_MPIM/Global_Reporting_and_Analytics/Advanced_Analytics/Size_Grid_Model_Predictions/Raw_Data/' + name + ' ' + df_name + '.csv')
+        final_data = final_data.append(pd.merge(joined_data[df_name], grouped_data[df_name], on = ['Size_1', 'Size_2']).drop('PC9_Shipped_QTY', axis = 1))
+    final_data.to_csv('//sfonetapp3220a/Global_MPIM/Global_Reporting_and_Analytics/Advanced_Analytics/Size_Grid_Model_Predictions/Raw_Data/' + name + '_all' + '.csv')
