@@ -21,8 +21,8 @@ from scipy.spatial.distance import cdist
 
 # import PC9 shipment data into pandas df
 
-planning_group_list = ['JCP', 'MACYS', 'KOHLS']
-style_list = ['511', '505', '501']
+planning_group_list = ['JCP']
+style_list = ['511', '505', '501', '502', '510', '512', '513', '514', '517', '527', '541', '550', '559', '569']
 avgWithinSS = {}
 final_data = pd.DataFrame()
 for name in planning_group_list:
@@ -30,7 +30,7 @@ for name in planning_group_list:
         PC9ShipFile = os.path.normpath('//sfonetapp3220a/Global_MPIM/Global_Reporting_and_Analytics/Advanced_Analytics/Size_Grid_Model_Predictions/Test_Data/' + name + '_' + style + '_PC9_SHIPMENTS.csv') 
         PC9_Shipment_Qty = pd.read_csv(PC9ShipFile)
         PC9_Shipment_Qty['PC9_Shipped_Qty'] = PC9_Shipment_Qty['PC9_Shipped_Qty'].apply(str).apply(lambda x: x.replace(',','')).apply(pd.to_numeric)
-    
+
     # prepares data type for k-means clustering
     
     # Kevin's Comments:
@@ -155,43 +155,37 @@ for name in planning_group_list:
             df_name = 'PC9_volume_cluster_' + str(cluster)
             grouped_data[df_name] = pd.DataFrame(temp_data[df_name].groupby(['Size_1', 'Size_2']).sum().sort_values(by = ['Size_Shipped_Qty']).reset_index())
     
-        # collects sum of Size_Shipped_QTY sorted and row count for each cluster
+        # optimization process (decided to do a 99.9% retention on max volume cluster and 99.5% retention on cumulative sum on lower volume clusters)
     
-        sum_shipped_qty = {}
-        row_count = {}
-        cluster_sum = []
-        percent_retention = {}
-    
+        percent_retention ={}
+        number_rows = {}
+        cluster_sum = {}
+        max_cluster = max(cluster_categories)
+        
         for cluster in cluster_categories:
-            df_name = 'PC9_volume_cluster_' + str(cluster)
-            cluster_sum.append(grouped_data[df_name].Size_Shipped_Qty.sum())
-    
-        for cluster in cluster_categories:
-            df_name = 'PC9_volume_cluster_' + str(cluster)
-            number_rows = len(grouped_data[df_name])
-            sum_shipped_qty[df_name] = cluster_sum[cluster]
-            row_count[df_name] = number_rows
-    
-        # optimization process (decided to do a 99% retention on all clusters for simplicity and consistency)
-    
-        for i in range(len(cluster_categories)):
-            df_name = 'PC9_volume_cluster_' + str(i)
-            percent_retention[df_name] = 0.99
-    
-        for cluster in cluster_categories:
-            cum_sum = 0
             counter = 0
+            cum_sum = 0
             df_name = 'PC9_volume_cluster_' + str(cluster)
-            
-            for i in range(row_count[df_name]):
-                cum_sum = cum_sum + grouped_data[df_name].Size_Shipped_Qty[i]
-                if cum_sum < (1 - percent_retention[df_name]) * sum_shipped_qty[df_name]:
-                    counter = counter + 1
-                else:
-                    break
-            
-            grouped_data[df_name] = grouped_data[df_name].drop(grouped_data[df_name].index[0:counter])
-       
+            cluster_sum[df_name] = grouped_data[df_name].Size_Shipped_Qty.sum()
+            number_rows[df_name] = len(grouped_data[df_name])
+            if cluster == max_cluster:
+                percent_retention[df_name] = 0.997
+                for i in range(number_rows[df_name]):
+                    cum_sum = cum_sum + grouped_data[df_name].Size_Shipped_Qty[i]
+                    if cum_sum < (1 - percent_retention[df_name]) * cluster_sum[df_name]:
+                        counter = counter + 1
+                    else:
+                        break
+            else:
+                percent_retention[df_name] = 0.995
+                for i in range(number_rows[df_name]):
+                    cum_sum = cum_sum + grouped_data[df_name].Size_Shipped_Qty[i]
+                    if cum_sum < (1 - percent_retention[df_name]) * cluster_sum[df_name]:
+                        counter = counter + 1
+                    else:
+                        break
+            grouped_data[df_name] = grouped_data[df_name].drop(grouped_data[df_name].index[0:counter]) 
+                    
         # higher volume size grid count constraint by checking if lower volume size grid is subset
         
         constraint_data = {}
